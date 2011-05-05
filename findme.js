@@ -28,6 +28,7 @@ function getBusStops(position) {
 	
 	Ext.util.JSONP.request({
 				url: 'http://jsonptunnel.appspot.com/',
+				//url: 'http://linkedmanchester.org/sparql.json',
                 callbackKey: '_callback',
                 params: {       
 					extURL: 'http://linkedmanchester.org/sparql.json',             
@@ -122,8 +123,8 @@ function onBusStopRecieved(lat,long,localData){
 */
 
 function showBusStop(busStop) {
-	var panel = new BusesPanel(busStop,startPanel);
+	var panel = new BusesPanel(startPanel);
 	startPanel.setActiveItem(panel);
-	panel.getBuses();
+	panel.getBuses(busStop);
 	
 }
