@@ -166,7 +166,7 @@ function getTime(hoursDiff)
 	var minutes = now.getMinutes();
 	
 
-	var timeValue = (hours < 10) ? "0" + hours + "cunt" : hours+":";
+	var timeValue = (hours < 10) ? "0" + hours +":": hours+":";
 
 	timeValue = timeValue + ((minutes < 10) ? "0" + minutes : minutes+"");
 	return timeValue;
