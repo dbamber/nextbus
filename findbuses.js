@@ -1,18 +1,41 @@
 Ext.regModel('BusRoute', { fields: ['Name'] });
+Ext.regModel('StopTime', { fields: ['Label','Depart'] });
 
 var BusesPanel = Ext.extend(Ext.Panel, {
+	
+		back: function() {
+			return this.list.back();
+				
+			
+			
+		},
 	    // New function added
 	    constructor: function(root) {
 
 			this.root = root;
-    		BusesPanel.superclass.constructor.call(this, { layout: { type: 'vbox', align: 'stretch' } });
+    		BusesPanel.superclass.constructor.call(this, { 
+    			layout: { type: 'vbox', align: 'stretch' }
+		    			
+    			});
 			
+	    },
+	    
+	    backHandler: function(b,e) {
+	    	if (this.list.items.length == 1)
+	    	{
+	    		startPanel.remove(2); 
+	    		startPanel.setActiveItem(1,'slide');
+	    	}
+	    	else {
+	    		this.list.setActiveItem(0,'slide');
+	    		this.list.remove(1);
+	    	}
 	    },
 		onRender: function() {
 			BusesPanel.superclass.onRender.apply(this, arguments);
-			this.map = new MapPanel();
+			//this.map = new MapPanel();
 			this.list = new ListPanel();
-			this.add(this.map);
+			//this.add(this.map);
 			this.add(this.list);
     	},
 		
@@ -25,6 +48,10 @@ var BusesPanel = Ext.extend(Ext.Panel, {
 			
 		},
 		
+		onTimesDownloaded: function (data)
+		{
+			this.list.showTimesData(data);
+		},
 		
 		busDownloaded: function (result)
 		{
@@ -43,7 +70,7 @@ var BusesPanel = Ext.extend(Ext.Panel, {
 		getBuses: function(loc)
 		{
 			this.location = loc;
-			this.map.update({ latitude : loc.Lat,longitude : loc.Long});
+			//this.map.update({ latitude : loc.Lat,longitude : loc.Long});
 			  var query = "PREFIX transit: <http://vocab.org/transit/terms/> " +
 			  				"SELECT distinct ?route ?label WHERE { " +
 								"?thing <http://data.ordnancesurvey.co.uk/ontology/spatialrelations/easting> "+this.location.East+" . " + 
@@ -83,9 +110,12 @@ var BusesPanel = Ext.extend(Ext.Panel, {
 				"?t <http://www.w3.org/2000/01/rdf-schema#label> ?tlabel . " +
 				"?st <http://vocab.org/transit/terms/departureTime> ?depart ." +
 				"FILTER(STR(?depart) > \"" + getTime(0) + "\") . " +
-				"FILTER(STR(?depart) < \"" + getTime(2) + "\") " + 
+				"FILTER(STR(?depart) < \"" + getTime(2) + "\") . " +
+				"?t <http://vocab.org/transit/terms/serviceCalendar> ?sc . "+
+				"?sc " + getTodaysDayField() + " true " +
 				"} ";
 	
+			//alert(query);
 			this.root.setLoading(true);
 			
 			Ext.util.JSONP.request({
@@ -108,10 +138,11 @@ var BusesPanel = Ext.extend(Ext.Panel, {
 			var items = new Array();
 			for (var i =0;i<result.results.bindings.length;i++)
 			{
-				alert(result.results.bindings[i].depart.value);
 				items.push( { Depart: result.results.bindings[i].depart.value, Label: result.results.bindings[i].tlabel.value });
 				
-			}     
+			}   
+			
+			this.onTimesDownloaded(items);  
 		}
 		
 	});
@@ -134,7 +165,13 @@ var MapPanel = Ext.extend(Ext.Map, {
 var ListPanel = Ext.extend(Ext.Panel, {
 		flex: 1,
 		layout:  'card',
-		
+		back: function (){
+			if (this.items.length == 1) return false;
+
+			this.setActiveItem(0,'slide');
+			this.remove(1);
+			return true;
+		},
 		showRouteData: function(data,callback,scope)
 		 {
 		 	this.removeAll();
@@ -155,7 +192,22 @@ var ListPanel = Ext.extend(Ext.Panel, {
 					}
 				}));
 			this.doLayout();
-		 }
+		 },
+		showTimesData: function (data)
+		{
+			var store = new Ext.data.Store({
+				model: 'StopTime',
+				sorters: 'Label',
+				getGroupString: function(record) { return record.get('Label')[0]; },
+				data: data
+			});
+			
+			this.setActiveItem(new Ext.List({
+				store: store,
+				itemTpl: 'Departs: {Depart}',
+				
+				}),'slide');
+		}
 });
 
 
@@ -172,6 +224,28 @@ function getTime(hoursDiff)
 	return timeValue;
 }
 
+
+function getTodaysDayField()
+{
+	var d = new Date();
+	switch (d.getDay())
+	{
+		case 0:
+			return '<http://vocab.org/transit/terms/sunday>';
+		case 1:
+			return '<http://vocab.org/transit/terms/monday>';
+		case 2:
+			return '<http://vocab.org/transit/terms/tuesday>';
+		case 3:
+			return '<http://vocab.org/transit/terms/wednesday>';
+		case 4:
+			return '<http://vocab.org/transit/terms/thursday>';
+		case 5:
+			return '<http://vocab.org/transit/terms/friday>';
+		case 6:
+			return '<http://vocab.org/transit/terms/saturday>';	
+	}
+}
 /*
 
 

@@ -3,6 +3,22 @@ Ext.regModel('Links', {
         fields: ['name']
     });
 
+
+
+// our callback function, let's fetch some nearby tweets:
+function findme() {
+	startPanel.setLoading('true','true');
+	
+  	var panel = new FindMePanel(startPanel);
+ 
+  	navigator.geolocation.getCurrentPosition(function (position)
+  	{
+  		panel.setLocationAndFindStops(position);
+  	});
+  	
+  	return panel;
+}
+
 var linksData = [
         {name: 'Find me...', handler: findme},
 		{name: 'Find bus...'},
@@ -10,21 +26,67 @@ var linksData = [
     ];
 var linksStore = new Ext.data.Store({model: 'Links',data: linksData});
 
-var homePanel = new Ext.Panel({
-	layout: 'fit',
-	items: [
+var HomePanel = Ext.extend(Ext.Panel, 
 	{
-		xtype: 'list',
-		itemTpl: '{name}',
-		store: linksStore,
-		onItemTap: function(item,index)
-		{
-			var obj = linksStore.getAt(index).data;
-			obj.handler();
-		}
-	}
-	]
-});
+		layout: 'card',
+		
+
+	    constructor: function() {	
+	    	this.currentPanel = {
+	    		back: function(){
+	    			return false;
+	    		}
+	    	}		
+    		FindMePanel.superclass.constructor.call(this, 
+    			{ 
+					items: [
+					{
+						xtype: 'list',
+						itemTpl: '{name}',
+						store: linksStore,
+						listeners: {
+							itemtap: function(item,index)
+								{
+									var obj = linksStore.getAt(index).data;
+									this.currentPanel = obj.handler();
+									this.setActiveItem(this.currentPanel,'slide');
+								},
+							scope: this
+						}
+					}],
+					dockedItems: [
+					{
+						xtype:'toolbar',
+						dock: 'top',
+						title: 'Next Bus?',
+			
+						items:[
+							{
+								text: 'Back',
+								ui: 'back',
+	
+								handler: function(item,index)
+									{
+										if (!this.currentPanel.back())
+										{
+											javascript:location.reload(true);
+										}
+									},
+								scope: this
+								
+							
+							}
+						],
+
+					}]
+					
+					
+    		});
+    	}
+	});
+
+
+
 
 var startPanel;
 function refreshpage(b,sender)
@@ -40,21 +102,8 @@ Ext.setup({
 			
 			layout:  'card',
 			fullscreen: true,
-			
-            items: [ homePanel ],
-			dockedItems: [
-				{
-					xtype:'toolbar',
-					dock: 'top',
-					title: 'Next Bus?',
-					
-					items: [
-							{
-								text: 'Restart',
-								handler: refreshpage
-							}
-						]
-				}]
         });
+        
+        startPanel.setActiveItem(new HomePanel());
     }
 });
