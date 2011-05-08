@@ -20,9 +20,7 @@ function findme() {
 }
 
 var linksData = [
-        {name: 'Find me...', handler: findme},
-		{name: 'Find bus...'},
-		{name: 'About...'}
+        {name: 'Find me...', handler: findme}
     ];
 var linksStore = new Ext.data.Store({model: 'Links',data: linksData});
 
@@ -30,35 +28,46 @@ var HomePanel = Ext.extend(Ext.Panel,
 	{
 		layout: 'card',
 		
-
 	    constructor: function() {	
 	    	this.currentPanel = {
 	    		back: function(){
 	    			return false;
 	    		}
-	    	}		
+	    	};
+	    			
     		FindMePanel.superclass.constructor.call(this, 
     			{ 
-					items: [
-					{
-						xtype: 'list',
-						itemTpl: '{name}',
-						store: linksStore,
-						listeners: {
-							itemtap: function(item,index)
-								{
-									var obj = linksStore.getAt(index).data;
-									this.currentPanel = obj.handler();
-									this.setActiveItem(this.currentPanel,'slide');
-								},
-							scope: this
-						}
+    				items:[
+    				{
+    					layout: {type: 'vbox',align: 'left'},
+						items: [
+						{
+							styleHtmlContent: true,
+							html: '<p>Welcome to NextBus - Manchester. You can use this site to find out the next scheduled bus from your local stop!   </p>' +
+									'<p>Developed for <a href="http://lovelydata.wordpress.com/">LovelyData</a> hackdays. Made possible by the great work done by <a href="http://www.swirrl.com/">swirrl</a> and <a href="http://linkedmanchester.org">Linked Manchester</a>. Many Thanks!</p>' +
+									'<p>Please bookmark us! Select from below to begin!</p>'
+						},
+						{
+							xtype: 'list',
+							itemTpl: '{name}',
+							store: linksStore,
+							listeners: {
+								itemtap: function(item,index)
+									{
+										var obj = linksStore.getAt(index).data;
+										this.currentPanel = obj.handler();
+										this.setActiveItem(this.currentPanel,'slide');
+									},
+								scope: this
+							}
+						}]
 					}],
+					
 					dockedItems: [
 					{
 						xtype:'toolbar',
 						dock: 'top',
-						title: 'Next Bus?',
+						title: 'Next Bus? (Manchester)',
 			
 						items:[
 							{
